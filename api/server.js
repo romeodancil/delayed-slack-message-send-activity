@@ -10,7 +10,6 @@ app.use(express.json());
 app.use(cors()); // Allow frontend to call this backend
 
 app.post("/api/send-message", async (req, res) => {
-  debugger;
   try {
     const response = await fetch(req.body.webhook, {
       method: "POST",
