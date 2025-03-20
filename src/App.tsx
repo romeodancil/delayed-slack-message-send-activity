@@ -17,6 +17,7 @@ type UnitType = "minutes" | "seconds" | "hours";
 
 function App() {
   const [delay, setDelay] = useState(0);
+  const [delayInput, setDelayInput] = useState("");
   const [unit, setUnit] = useState<UnitType>("seconds");
   const [buttonText, setButtonText] = useState("Send");
   const [isSending, setIsSending] = useState(false);
@@ -28,6 +29,8 @@ function App() {
 
   const handleUnitValueChange = (value: UnitType) => {
     setUnit(value);
+    setDelay(0);
+    setDelayInput("");
   };
 
   useEffect(() => {
@@ -77,6 +80,11 @@ function App() {
 
   const handleOnDelayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
+    setDelayInput(e.target.value);
+    if (!e.target.value) {
+      setDelay(0);
+      return;
+    }
     const delayValue =
       unit === "seconds"
         ? value
@@ -95,8 +103,8 @@ function App() {
 
   useEffect(() => {
     if (!isSending) {
-      if (!delay || !message || !url) setDisableSend(true);
-      else setDisableSend(false);
+      if (delay > 0 && message && url) setDisableSend(false);
+      else setDisableSend(true);
     }
     if (isSending) {
       setDisableSend(true);
@@ -125,42 +133,22 @@ function App() {
         setIsError(false);
         setMessage("");
         setUrl("");
+        setIsSending(false);
       } else {
         setDisableSend(false);
         setIsError(true);
         setStatus(data.error);
+        setIsSending(false);
+        setDelayInput("");
       }
     } catch (error) {
+      setDelayInput("");
       setDisableSend(false);
+      setIsSending(false);
       setIsError(true);
       setStatus("Error sending slack message check your configuration");
       console.error("Error:", error);
     }
-
-    // try {
-    //   const response = await fetch(webHookUrl, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(payload),
-    //   });
-    //   console.log("response", response);
-    //   if (response.ok) {
-    //     setStatus("Message sent to Slack!");
-    //     setDisableSend(false);
-    //     setIsError(false);
-    //   } else {
-    //     setDisableSend(false);
-    //     setIsError(true);
-    //     setStatus(response.statusText);
-    //   }
-    // } catch (error: unknown) {
-    //   setDisableSend(false);
-    //   setIsError(true);
-    //   setStatus("Error sending slack message check your configuration");
-    //   console.error("Error:", error);
-    // }
   };
 
   return (
@@ -185,13 +173,19 @@ function App() {
           <Label className="whitespace-nowrap shrink-0" htmlFor="delay">
             Delay input:
           </Label>
-          <Input name="delay" onChange={handleOnDelayChange} />
+          <Input
+            type="number"
+            value={delayInput}
+            name="delay"
+            onChange={handleOnDelayChange}
+          />
         </div>
         <div className="flex items-center space-x-8">
           <Label className="whitespace-nowrap shrink-0" htmlFor="message">
             Slack Message Input:
           </Label>
           <Input
+            value={message}
             name="message"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setMessage(e.target.value)
@@ -203,6 +197,7 @@ function App() {
             Slack Hook URL Input:
           </Label>
           <Input
+            value={url}
             name="url"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setUrl(e.target.value)
