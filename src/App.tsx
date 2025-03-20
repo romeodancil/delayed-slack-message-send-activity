@@ -47,7 +47,7 @@ function App() {
 
   useEffect(() => {
     let interval: IntervalType;
-    if (isSending) {
+    if (isSending && delay > 0) {
       interval = setInterval(() => {
         setDelay((prev) => prev - 1);
       }, 1000);
@@ -87,7 +87,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (delay <= 0 && message && url) {
+    if (delay === 0 && message && url) {
       sendSlackMessage(`From Romeo Dancil Slack Bot: ${message}`, url);
       setDisableSend(false);
     }
@@ -104,36 +104,63 @@ function App() {
   }, [delay, message, url, isSending]);
 
   const sendSlackMessage = async (message: string, webHookUrl: string) => {
-    const webhookURL = webHookUrl;
-
     const payload = {
       text: message,
+      webhook: webHookUrl,
     };
 
     try {
-      const response = await fetch(webhookURL, {
+      const response = await fetch("http://localhost:5000/send-message", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-      console.log("response", response);
-      if (response.ok) {
+
+      const data = await response.json();
+      if (data.success) {
         setStatus("Message sent to Slack!");
         setDisableSend(false);
         setIsError(false);
+        setMessage("");
+        setUrl("");
       } else {
         setDisableSend(false);
         setIsError(true);
-        setStatus(response.statusText);
+        setStatus(data.error);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       setDisableSend(false);
       setIsError(true);
       setStatus("Error sending slack message check your configuration");
       console.error("Error:", error);
     }
+
+    // try {
+    //   const response = await fetch(webHookUrl, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify(payload),
+    //   });
+    //   console.log("response", response);
+    //   if (response.ok) {
+    //     setStatus("Message sent to Slack!");
+    //     setDisableSend(false);
+    //     setIsError(false);
+    //   } else {
+    //     setDisableSend(false);
+    //     setIsError(true);
+    //     setStatus(response.statusText);
+    //   }
+    // } catch (error: unknown) {
+    //   setDisableSend(false);
+    //   setIsError(true);
+    //   setStatus("Error sending slack message check your configuration");
+    //   console.error("Error:", error);
+    // }
   };
 
   return (
