@@ -110,7 +110,7 @@ function App() {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/send-message", {
+      const response = await fetch("/api/send-message", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
